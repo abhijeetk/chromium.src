@@ -1739,6 +1739,16 @@ bool HTMLInputElement::shouldAppearIndeterminate() const
     return m_inputType->shouldAppearIndeterminate();
 }
 
+const AtomicString& HTMLInputElement::nwworkingdir() const
+{
+    return fastGetAttribute(nwworkingdirAttr);
+}
+
+void HTMLInputElement::setNwworkingdir(const AtomicString& value)
+{
+    setAttribute(nwworkingdirAttr, value);
+}
+
 bool HTMLInputElement::isInRequiredRadioButtonGroup()
 {
     // FIXME: Remove type check.

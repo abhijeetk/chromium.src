@@ -453,6 +453,9 @@ void FileSelectHelper::GetSanitizedFilenameOnUIThread(
   base::FilePath default_file_path = profile_->last_selected_directory().Append(
       GetSanitizedFileName(params->default_file_name));
 
+  if (!params->initial_path.empty())
+    default_file_path = params->initial_path;
+
 #if defined(FULL_SAFE_BROWSING)
   // Note that FileChooserParams::requestor is not considered a trusted field
   // since it's provided by the renderer and not validated browserside.

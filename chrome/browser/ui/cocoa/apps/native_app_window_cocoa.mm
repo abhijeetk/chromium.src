@@ -18,6 +18,7 @@
 #include "chrome/browser/ui/cocoa/extensions/extension_view_mac.h"
 #include "chrome/common/chrome_switches.h"
 #include "content/public/browser/native_web_keyboard_event.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/browser/render_widget_host_view.h"
 #include "content/public/browser/web_contents.h"
 #include "extensions/common/extension.h"
@@ -49,6 +50,11 @@ using extensions::AppWindow;
 - (void)setBottomCornerRounded:(BOOL)rounded;
 - (BOOL)_isTitleHidden;
 @end
+
+namespace content {
+  extern bool g_support_transparency;
+  extern bool g_force_cpu_draw;
+}
 
 namespace {
 
@@ -101,6 +107,12 @@ std::vector<gfx::Rect> CalculateNonDraggableRegions(
 
 - (void)setTitlebarBackgroundView:(NSView*)view {
   titlebar_background_view_.reset([view retain]);
+}
+
+- (BOOL)windowShouldClose:(id)sender {
+  if (appWindow_ && !appWindow_->NWCanClose())
+    return NO;
+  return YES;
 }
 
 - (void)windowWillClose:(NSNotification*)notification {
@@ -275,7 +287,7 @@ NativeAppWindowCocoa::NativeAppWindowCocoa(
   if (extension)
     name = extension->name();
   [window setTitle:base::SysUTF8ToNSString(name)];
-  [[window contentView] setWantsLayer:YES];
+  [[window contentView] setWantsLayer:!content::g_force_cpu_draw];
 
   if (base::mac::IsOSSnowLeopard() &&
       [window respondsToSelector:@selector(setBottomCornerRounded:)])
@@ -289,6 +301,11 @@ NativeAppWindowCocoa::NativeAppWindowCocoa(
 
   window_controller_.reset(
       [[NativeAppWindowController alloc] initWithWindow:window]);
+        
+  if (content::g_support_transparency && params.alpha_enabled) {
+    [window setOpaque: NO];
+    [window setBackgroundColor: [NSColor clearColor]];
+  }
 
   if (has_frame_ && has_frame_color_) {
     TitlebarBackgroundView* view =
@@ -663,6 +680,12 @@ bool NativeAppWindowCocoa::IsAlwaysOnTop() const {
 void NativeAppWindowCocoa::RenderViewCreated(content::RenderViewHost* rvh) {
   if (IsActive())
     WebContents()->RestoreFocus();
+  if (content::g_support_transparency &&
+      app_window_->requested_alpha_enabled() && CanHaveAlphaEnabled()) {
+    content::RenderWidgetHostView* view = rvh->GetView();
+    DCHECK(view);
+    view->SetBackgroundColor(SK_ColorTRANSPARENT);
+  }
 }
 
 bool NativeAppWindowCocoa::IsFrameless() const {
@@ -701,7 +724,7 @@ gfx::Insets NativeAppWindowCocoa::GetFrameInsets() const {
 }
 
 bool NativeAppWindowCocoa::CanHaveAlphaEnabled() const {
-  return false;
+  return content::g_support_transparency ? [window() isOpaque] == NO : false;
 }
 
 gfx::NativeView NativeAppWindowCocoa::GetHostView() const {
@@ -732,6 +755,10 @@ void NativeAppWindowCocoa::WindowWillClose() {
   [window_controller_ setAppWindow:NULL];
   app_window_->OnNativeWindowChanged();
   app_window_->OnNativeClose();
+}
+
+bool NativeAppWindowCocoa::NWCanClose() {
+  return app_window_->NWCanClose();
 }
 
 void NativeAppWindowCocoa::WindowDidBecomeKey() {
@@ -841,6 +868,25 @@ gfx::Size NativeAppWindowCocoa::GetContentMinimumSize() const {
 
 gfx::Size NativeAppWindowCocoa::GetContentMaximumSize() const {
   return size_constraints_.GetMaximumSize();
+}
+
+void NativeAppWindowCocoa::SetResizable(bool flag) {
+  is_resizable_ = flag;
+  gfx::Size min_size = size_constraints_.GetMinimumSize();
+  gfx::Size max_size = size_constraints_.GetMaximumSize();
+
+  shows_resize_controls_ =
+      is_resizable_ && !size_constraints_.HasFixedSize();
+  shows_fullscreen_controls_ =
+      is_resizable_ && !size_constraints_.HasMaximumSize() && has_frame_;
+
+  gfx::ApplyNSWindowSizeConstraints(window(), min_size, max_size,
+                                    shows_resize_controls_,
+                                    shows_fullscreen_controls_);
+}
+
+bool NativeAppWindowCocoa::IsResizable() const {
+  return is_resizable_;
 }
 
 void NativeAppWindowCocoa::SetContentSizeConstraints(

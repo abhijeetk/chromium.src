@@ -16,6 +16,10 @@
 #include "ui/gfx/geometry/dip_util.h"
 #include "ui/gl/scoped_cgl.h"
 
+namespace content {
+  extern bool g_force_cpu_draw;
+}
+
 namespace ui {
 namespace {
 
@@ -290,6 +294,8 @@ void AcceleratedWidgetMac::GotSoftwareFrame(float scale_factor,
   if (!software_layer_) {
     software_layer_.reset([[SoftwareLayer alloc] init]);
     [flipped_layer_ addSublayer:software_layer_];
+    if (content::g_force_cpu_draw)
+      [software_layer_.get() setBackgroundColor:[flipped_layer_.get() backgroundColor]];
   }
 
   // Set the software layer to draw the provided canvas.
@@ -303,6 +309,10 @@ void AcceleratedWidgetMac::GotSoftwareFrame(float scale_factor,
                      withScaleFactor:scale_factor];
   last_swap_size_dip_ = gfx::ConvertSizeToDIP(scale_factor, pixel_size);
 
+  if (content::g_force_cpu_draw) {
+    // this is to tell parent window, that the window content has been updated
+    [[view_->AcceleratedWidgetGetNSView() superview]setNeedsDisplay:YES];
+  }
   // Remove any different-type layers that this is replacing.
   DestroyCAContextLayer(ca_context_layer_);
   DestroyIOSurfaceLayer(io_surface_layer_);

@@ -107,6 +107,7 @@ int KeyStateFlagsFromNative(const base::NativeEvent& native_event) {
   flags |= base::win::IsAltPressed() ? EF_ALT_DOWN : EF_NONE;
   flags |= base::win::IsShiftPressed() ? EF_SHIFT_DOWN : EF_NONE;
   flags |= base::win::IsCtrlPressed() ? EF_CONTROL_DOWN : EF_NONE;
+  flags |= base::win::IsWindowsPressed() ? EF_COMMAND_DOWN : EF_NONE;
 
   // Check key messages for the extended key flag.
   if (IsKeyEvent(native_event))

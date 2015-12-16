@@ -81,6 +81,8 @@ struct WebFileChooserParams {
     // initiated by a document.
     WebURL requestor;
 
+    WebString initialPath;
+
     WebFileChooserParams()
         : multiSelect(false)
         , directory(false)
