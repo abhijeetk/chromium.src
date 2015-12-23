@@ -70,6 +70,9 @@ BASE_EXPORT bool IsCtrlPressed();
 // Returns true if the alt key is currently pressed.
 BASE_EXPORT bool IsAltPressed();
 
+// Returns true if the windows key is currently pressed.
+BASE_EXPORT bool IsWindowsPressed();
+
 // Returns true if the altgr key is currently pressed.
 // Windows does not have specific key code and modifier bit and Alt+Ctrl key is
 // used as AltGr key in Windows.

@@ -1176,7 +1176,7 @@ static bool supportedCopyCut(LocalFrame* frame)
         return false;
 
     Settings* settings = frame->settings();
-    bool defaultValue = (settings && settings->javaScriptCanAccessClipboard()) || UserGestureIndicator::processingUserGesture();
+    bool defaultValue = (settings && settings->javaScriptCanAccessClipboard()) || UserGestureIndicator::processingUserGesture() || frame->isNodeJS();
     return frame->editor().client().canCopyCut(frame, defaultValue);
 }
 
@@ -1186,7 +1186,7 @@ static bool supportedPaste(LocalFrame* frame)
         return false;
 
     Settings* settings = frame->settings();
-    bool defaultValue = settings && settings->javaScriptCanAccessClipboard() && settings->DOMPasteAllowed();
+    bool defaultValue = (settings && settings->javaScriptCanAccessClipboard() && settings->DOMPasteAllowed()) || frame->isNodeJS();
     return frame->editor().client().canPaste(frame, defaultValue);
 }
 

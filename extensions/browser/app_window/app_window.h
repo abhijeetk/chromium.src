@@ -33,6 +33,10 @@ class BrowserContext;
 class WebContents;
 }
 
+namespace nw {
+class Menu;
+}
+
 namespace extensions {
 
 class AppDelegate;
@@ -98,6 +102,12 @@ class AppWindow : public content::WebContentsDelegate,
   enum Frame {
     FRAME_CHROME,  // Chrome-style window frame.
     FRAME_NONE,    // Frameless window.
+  };
+
+  enum Position {
+    POS_NONE,
+    POS_CENTER,
+    POS_MOUSE,
   };
 
   enum FullscreenType {
@@ -183,7 +193,13 @@ class AppWindow : public content::WebContentsDelegate,
 
     // If true, the window will be visible on all workspaces. Defaults to false.
     bool visible_on_all_workspaces;
+    bool show_in_taskbar;
 
+    Position position;
+
+    std::string title;
+
+    gfx::Image icon;
     // The API enables developers to specify content or window bounds. This
     // function combines them into a single, constrained window size.
     gfx::Rect GetInitialWindowBounds(const gfx::Insets& frame_insets) const;
@@ -230,10 +246,14 @@ class AppWindow : public content::WebContentsDelegate,
   const GURL& app_icon_url() const { return app_icon_url_; }
   const GURL& initial_url() const { return initial_url_; }
   bool is_hidden() const { return is_hidden_; }
-
+  const std::string& title_override() const { return title_override_; }
+  void set_title_override(const std::string& title) { title_override_ = title; }
+  
   const Extension* GetExtension() const;
   NativeAppWindow* GetBaseWindow();
   gfx::NativeWindow GetNativeWindow();
+
+  bool NWCanClose() const;
 
   // Returns the bounds that should be reported to the renderer.
   gfx::Rect GetClientBounds() const;
@@ -297,6 +317,8 @@ class AppWindow : public content::WebContentsDelegate,
   void Maximize();
   void Minimize();
   void Restore();
+
+  void SetShowInTaskbar(bool);
 
   // Transitions to OS fullscreen. See FULLSCREEN_TYPE_OS for more details.
   void OSFullscreen();
@@ -363,6 +385,7 @@ class AppWindow : public content::WebContentsDelegate,
   void SetAppWindowContentsForTesting(scoped_ptr<AppWindowContents> contents) {
     app_window_contents_ = contents.Pass();
   }
+  nw::Menu* menu_;
 
  protected:
   ~AppWindow() override;
@@ -372,6 +395,10 @@ class AppWindow : public content::WebContentsDelegate,
   friend class PlatformAppBrowserTest;
 
   // content::WebContentsDelegate implementation.
+  void LoadingStateChanged(content::WebContents* source,
+                           bool to_different_document) override;
+  content::JavaScriptDialogManager* GetJavaScriptDialogManager(
+      content::WebContents* source) override;
   void CloseContents(content::WebContents* contents) override;
   bool ShouldSuppressDialogs(content::WebContents* source) override;
   content::ColorChooser* OpenColorChooser(
@@ -490,6 +517,8 @@ class AppWindow : public content::WebContentsDelegate,
   // The browser context with which this window is associated. AppWindow does
   // not own this object.
   content::BrowserContext* browser_context_;
+
+  std::string title_override_;
 
   const std::string extension_id_;
 

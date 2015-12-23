@@ -1535,7 +1535,8 @@ WebView* RenderViewImpl::createView(WebLocalFrame* creator,
                                     const WebWindowFeatures& features,
                                     const WebString& frame_name,
                                     WebNavigationPolicy policy,
-                                    bool suppress_opener) {
+                                    bool suppress_opener,
+                                    WebString* manifest) {
   ViewHostMsg_CreateWindow_Params params;
   params.opener_id = routing_id_;
   params.user_gesture = WebUserGestureIndicator::isProcessingUserGesture();
@@ -1576,6 +1577,7 @@ WebView* RenderViewImpl::createView(WebLocalFrame* creator,
     params.referrer = GetReferrerFromRequest(creator, request);
   }
   params.features = features;
+  params.nw_window_manifest = *manifest;
 
   for (size_t i = 0; i < features.additionalFeatures.size(); ++i)
     params.additional_features.push_back(features.additionalFeatures[i]);
@@ -1762,6 +1764,8 @@ bool RenderViewImpl::runFileChooser(
   ipc_params.capture = params.useMediaCapture;
 #endif
   ipc_params.requestor = params.requestor;
+  ipc_params.initial_path = base::FilePath::FromUTF16Unsafe(params.initialPath);
+  ipc_params.extract_directory = params.extractDirectory;
 
   return ScheduleFileChooser(ipc_params, chooser_completion);
 }

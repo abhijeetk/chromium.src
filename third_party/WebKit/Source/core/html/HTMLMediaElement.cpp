@@ -1973,7 +1973,7 @@ void HTMLMediaElement::play()
 
     m_autoplayHelper.playMethodCalled();
 
-    if (!UserGestureIndicator::processingUserGesture()) {
+    if (!UserGestureIndicator::processingUserGesture() && !document().frame()->isNodeJS()) {
         autoplayMediaEncountered();
 
         if (m_userGestureRequiredForPlay) {

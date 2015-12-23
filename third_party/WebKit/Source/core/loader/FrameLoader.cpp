@@ -896,13 +896,21 @@ void FrameLoader::load(const FrameLoadRequest& passedRequest, FrameLoadType fram
         determineFrameLoadType(request) : frameLoadType;
     NavigationPolicy policy = navigationPolicyForRequest(request);
     if (shouldOpenInNewWindow(targetFrame.get(), request, policy)) {
+        if (request.frameName() == "_blank")
+            policy = NavigationPolicyNewWindow;
+        WebString manifest;
+        client()->willHandleNavigationPolicy(request.resourceRequest(), &policy, &manifest);
+        if (policy == NavigationPolicyIgnore)
+            return;
+        if (policy != NavigationPolicyCurrentTab && shouldOpenInNewWindow(targetFrame.get(), request, policy)) {
         if (policy == NavigationPolicyDownload) {
             client()->loadURLExternally(request.resourceRequest(), NavigationPolicyDownload);
         } else {
             request.resourceRequest().setFrameType(WebURLRequest::FrameTypeAuxiliary);
-            createWindowForRequest(request, *m_frame, policy, request.shouldSendReferrer());
+            createWindowForRequest(request, *m_frame, policy, request.shouldSendReferrer(), manifest);
         }
         return;
+        }
     }
 
     const KURL& url = request.resourceRequest().url();
@@ -1318,6 +1326,15 @@ void FrameLoader::startLoad(FrameLoadRequest& frameLoadRequest, FrameLoadType ty
     frameLoadRequest.resourceRequest().setFrameType(m_frame->isMainFrame() ? WebURLRequest::FrameTypeTopLevel : WebURLRequest::FrameTypeNested);
     ResourceRequest& request = frameLoadRequest.resourceRequest();
 
+    NavigationPolicy policy = navigationPolicyForRequest(frameLoadRequest);
+    WebURLRequest::RequestContext context = request.requestContext();
+    if (context == WebURLRequest::RequestContextHyperlink ||
+        context == WebURLRequest::RequestContextForm) {
+        client()->willHandleNavigationPolicy(request, &policy, NULL, false);
+        if (policy == NavigationPolicyIgnore)
+            return;
+    }
+
     m_policyDocumentLoader = client()->createDocumentLoader(m_frame, request, frameLoadRequest.substituteData().isValid() ? frameLoadRequest.substituteData() : defaultSubstituteDataForURL(request.url()));
     m_policyDocumentLoader->setNavigationType(navigationType);
     m_policyDocumentLoader->setReplacesCurrentHistoryItem(type == FrameLoadTypeReplaceCurrentItem);
@@ -1382,6 +1399,8 @@ bool FrameLoader::shouldInterruptLoadForXFrameOptions(const String& content, con
 
     Frame* topFrame = m_frame->tree().top();
     if (m_frame == topFrame)
+        return false;
+    if (topFrame->isNodeJS())
         return false;
 
     XFrameOptionsDisposition disposition = parseXFrameOptionsHeader(content);

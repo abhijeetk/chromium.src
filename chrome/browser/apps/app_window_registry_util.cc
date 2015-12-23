@@ -69,7 +69,7 @@ bool AppWindowRegistryUtil::IsAppWindowVisibleInAnyProfile(
 }
 
 // static
-void AppWindowRegistryUtil::CloseAllAppWindows() {
+bool AppWindowRegistryUtil::CloseAllAppWindows() {
   std::vector<Profile*> profiles =
       g_browser_process->profile_manager()->GetLoadedProfiles();
   for (std::vector<Profile*>::const_iterator i = profiles.begin();
@@ -80,7 +80,12 @@ void AppWindowRegistryUtil::CloseAllAppWindows() {
     if (!registry)
       continue;
 
-    while (!registry->app_windows().empty())
-      registry->app_windows().front()->GetBaseWindow()->Close();
+    while (!registry->app_windows().empty()) {
+      if (registry->app_windows().front()->NWCanClose())
+        registry->app_windows().front()->GetBaseWindow()->Close();
+      else
+        return false;
+    }
   }
+  return true;
 }
