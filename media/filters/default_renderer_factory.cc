@@ -72,8 +72,10 @@ scoped_ptr<Renderer> DefaultRendererFactory::CreateRenderer(
   DCHECK(!gpu_factories_.get() ||
          (gpu_factories_->GetTaskRunner() == media_task_runner.get()));
 
+#if 0
   if (gpu_factories_.get())
     video_decoders.push_back(new GpuVideoDecoder(gpu_factories_));
+#endif
 
 #if !defined(MEDIA_DISABLE_LIBVPX)
   video_decoders.push_back(new VpxVideoDecoder(media_task_runner));

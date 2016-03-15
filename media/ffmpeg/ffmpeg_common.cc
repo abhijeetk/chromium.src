@@ -148,6 +148,8 @@ static AVCodecID AudioCodecToCodecID(AudioCodec audio_codec,
 // Converts an FFmpeg video codec ID into its corresponding supported codec id.
 static VideoCodec CodecIDToVideoCodec(AVCodecID codec_id) {
   switch (codec_id) {
+    case AV_CODEC_ID_MPEG2VIDEO:
+      return kCodecMPEG2;
     case AV_CODEC_ID_H264:
       return kCodecH264;
     case AV_CODEC_ID_THEORA:
@@ -166,6 +168,8 @@ static VideoCodec CodecIDToVideoCodec(AVCodecID codec_id) {
 
 static AVCodecID VideoCodecToCodecID(VideoCodec video_codec) {
   switch (video_codec) {
+  case kCodecMPEG2:
+      return AV_CODEC_ID_MPEG2VIDEO;
     case kCodecH264:
       return AV_CODEC_ID_H264;
     case kCodecTheora:

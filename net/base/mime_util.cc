@@ -217,7 +217,8 @@ static const MimeInfo primary_mappings[] = {
   { "audio/wav", "wav" },
   { "application/xhtml+xml", "xhtml,xht,xhtm" },
   { "application/x-chrome-extension", "crx" },
-  { "multipart/related", "mhtml,mht" }
+  { "multipart/related", "mhtml,mht" },
+  { "application/mxf", "mxf" }
 };
 
 static const MimeInfo secondary_mappings[] = {
@@ -360,6 +361,7 @@ static const char* const common_media_types[] = {
   // Wav.
   "audio/wav",
   "audio/x-wav",
+  "application/mxf",
 
 #if defined(OS_ANDROID)
   // HLS. Supported by Android ICS and above.
@@ -380,6 +382,7 @@ static const char* const proprietary_media_types[] = {
   "audio/mp3",
   "audio/x-mp3",
   "audio/mpeg",
+  "application/mxf",
 
 #if defined(ENABLE_MPEG2TS_STREAM_PARSER)
   // MPEG-2 TS.
@@ -563,7 +566,8 @@ static const MediaFormatStrict format_codec_mappings[] = {
   { "video/mp4", kMP4VideoCodecsExpression },
   { "video/x-m4v", kMP4VideoCodecsExpression },
   { "application/x-mpegurl", kMP4VideoCodecsExpression },
-  { "application/vnd.apple.mpegurl", kMP4VideoCodecsExpression }
+  { "application/vnd.apple.mpegurl", kMP4VideoCodecsExpression },
+  { "application/mxf", kMP4VideoCodecsExpression }
 };
 
 struct CodecIDMappings {
